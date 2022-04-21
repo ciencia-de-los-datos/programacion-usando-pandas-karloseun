@@ -155,9 +155,11 @@ def pregunta_09():
 
     """
     tbl0 = pd.read_csv("tbl0.tsv", sep="\t")
-    tbl0['_c3'] = pd.to_datetime(tbl0['_c3'], errors='coerce')
-    tbl0['year'] = tbl0['_c3'].dt.year
-    tbl0['year'] = tbl0['year'].astype(str).apply(lambda x: x.replace('.0',''))
+    # tbl0['year'] = pd.to_datetime( tbl0['_c3'], errors='ignore' ).to_string().split('-')
+    tbl0['year'] = tbl0['_c3'].astype(str).apply( lambda x: list(str(x).split('-'))[0] )
+
+    tbl0 = pd.DataFrame( { '_c0':tbl0['_c0'], '_c1':tbl0['_c1'], '_c2':tbl0['_c2'], '_c3':tbl0['_c3'], 'year':tbl0['year']} )
+    # print( tbl0.shape )
     
     return tbl0
 
@@ -181,25 +183,15 @@ def pregunta_10():
 
     # step:1 obtain a subset of the DataFrame’s columns
     tbl0 = tbl0[['_c1','_c2']]
-    # rename columns to a new DataFrame
-    # tbl0 = tbl0.rename(columns={"_c1": '_c0', "_c2": '_c1'})
-    # print(type(tbl0))
     # print(tbl0)
 
     # step:2 group by first column
-    tbl0 = tbl0.groupby('_c1')['_c2'].apply(list).apply( lambda x: sort(x) )
+    tbl0 = tbl0.groupby('_c1')['_c2'].apply(list).apply( lambda x: sort(x)).astype(str).apply(lambda x: x.replace(' ',':')).apply(lambda x: x.replace('[','')).apply(lambda x: x.replace(']',''))
     # print( type(tbl0) )
-    # print(tbl0)
+    # print( tbl0 )
 
     # step:3 convert to df 
-    tbl0 = pd.DataFrame({'_c1':tbl0.index, '_c2':tbl0.values})
-    # print( type(tbl0) )
-    # print(tbl0)
-
-    # step:4 convert to df 
-    tbl0['_c2'] = tbl0['_c2'].astype(str).apply(lambda x: x.replace(' ',':')).apply(lambda x: x.replace('[','')).apply(lambda x: x.replace(']',''))
-    # print( type(tbl0) )
-    # print(tbl0)
+    tbl0 = pd.DataFrame( {'_c2':tbl0.values} , index=pd.Series(tbl0.index, name='_c1' ),  )
 
     return tbl0
 
@@ -220,12 +212,12 @@ def pregunta_11():
     38   38      d,e
     39   39    a,d,f
     """
-    group_c0_tbl1 = tbl1.groupby('_c0')['_c4'].apply(list)
-    # print ( group_c0_tbl1 )
-    group_c0_tbl1 = pd.DataFrame({'_c0':group_c0_tbl1.index, '_c4':group_c0_tbl1.values})
-    # print ( group_c0_tbl1 )
+    group_c0_tbl1 = tbl1.groupby('_c0')['_c4'].apply(list).apply( lambda x: sort(x) ).apply( lambda x: ','.join(x) )
+    # print ( type(group_c0_tbl1) )
 
-    group_c0_tbl1['_c4'] = group_c0_tbl1['_c4'].apply( lambda x: sort(x) )
+    group_c0_tbl1 = pd.DataFrame( {'_c0':group_c0_tbl1.index, '_c4':group_c0_tbl1.values } )
+    # print ( type(group_c0_tbl1) )
+    # print ( group_c0_tbl1.columns )
 
     return group_c0_tbl1
 
@@ -255,7 +247,7 @@ def pregunta_12():
     gc0_tbl2 = pd.DataFrame({'_c0':gc0_tbl2.index, '_c5':gc0_tbl2.values })
     # print ( gc0_tbl2 )
 
-    gc0_tbl2['_c5'] = gc0_tbl2['_c5'].apply( lambda x: sort(x)  )
+    gc0_tbl2['_c5'] = gc0_tbl2['_c5'].apply( lambda x: sort(x)  ).apply( lambda x: ','.join(x) )
     # print ( gc0_tbl2 )
  
     return gc0_tbl2
