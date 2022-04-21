@@ -7,6 +7,8 @@ Este archivo contiene las preguntas que se van a realizar en el laboratorio.
 Utilice los archivos `tbl0.tsv`, `tbl1.tsv` y `tbl2.tsv`, para resolver las preguntas.
 
 """
+from operator import itemgetter
+from numpy import sort
 import pandas as pd
 
 tbl0 = pd.read_csv("tbl0.tsv", sep="\t")
@@ -22,7 +24,7 @@ def pregunta_01():
     40
 
     """
-    return
+    return tbl0.shape[0]
 
 
 def pregunta_02():
@@ -33,7 +35,7 @@ def pregunta_02():
     4
 
     """
-    return
+    return tbl0.shape[1]
 
 
 def pregunta_03():
@@ -50,7 +52,8 @@ def pregunta_03():
     Name: _c1, dtype: int64
 
     """
-    return
+    # tbl0._c1.value_counts().sort_index(axis=0,ascending=True)
+    return  tbl0.groupby('_c1')['_c1'].count()
 
 
 def pregunta_04():
@@ -65,7 +68,7 @@ def pregunta_04():
     E    4.785714
     Name: _c2, dtype: float64
     """
-    return
+    return tbl0.groupby('_c1')['_c2'].mean() 
 
 
 def pregunta_05():
@@ -82,7 +85,7 @@ def pregunta_05():
     E    9
     Name: _c2, dtype: int64
     """
-    return
+    return tbl0.groupby('_c1')['_c2'].max()
 
 
 def pregunta_06():
@@ -94,7 +97,10 @@ def pregunta_06():
     ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 
     """
-    return
+    q6 = []
+    q6 =sorted( [ i.upper() for i in tbl1['_c4'].unique().tolist() ], key=itemgetter(0), reverse=False )
+
+    return q6
 
 
 def pregunta_07():
@@ -110,7 +116,7 @@ def pregunta_07():
     E    67
     Name: _c2, dtype: int64
     """
-    return
+    return tbl0.groupby('_c1')['_c2'].sum()
 
 
 def pregunta_08():
@@ -128,7 +134,9 @@ def pregunta_08():
     39   39   E    5  1998-01-26    44
 
     """
-    return
+    tbl0['suma'] = tbl0['_c0'] + tbl0['_c2']
+    
+    return tbl0
 
 
 def pregunta_09():
@@ -146,7 +154,14 @@ def pregunta_09():
     39   39   E    5  1998-01-26  1998
 
     """
-    return
+    tbl0 = pd.read_csv("tbl0.tsv", sep="\t")
+    # tbl0['year'] = pd.to_datetime( tbl0['_c3'], errors='ignore' ).to_string().split('-')
+    tbl0['year'] = tbl0['_c3'].astype(str).apply( lambda x: list(str(x).split('-'))[0] )
+
+    tbl0 = pd.DataFrame( { '_c0':tbl0['_c0'], '_c1':tbl0['_c1'], '_c2':tbl0['_c2'], '_c3':tbl0['_c3'], 'year':tbl0['year']} )
+    # print( tbl0.shape )
+    
+    return tbl0
 
 
 def pregunta_10():
@@ -163,7 +178,22 @@ def pregunta_10():
     3   D                  1:2:3:5:5:7
     4   E  1:1:2:3:3:4:5:5:5:6:7:8:8:9
     """
-    return
+
+    tbl0 = pd.read_csv("tbl0.tsv", sep="\t")
+
+    # step:1 obtain a subset of the DataFrame’s columns
+    tbl0 = tbl0[['_c1','_c2']]
+    # print(tbl0)
+
+    # step:2 group by first column
+    tbl0 = tbl0.groupby('_c1')['_c2'].apply(list).apply( lambda x: sort(x)).astype(str).apply(lambda x: x.replace(' ',':')).apply(lambda x: x.replace('[','')).apply(lambda x: x.replace(']',''))
+    # print( type(tbl0) )
+    # print( tbl0 )
+
+    # step:3 convert to df 
+    tbl0 = pd.DataFrame( {'_c2':tbl0.values} , index=pd.Series(tbl0.index, name='_c1' ),  )
+
+    return tbl0
 
 
 def pregunta_11():
@@ -182,7 +212,14 @@ def pregunta_11():
     38   38      d,e
     39   39    a,d,f
     """
-    return
+    group_c0_tbl1 = tbl1.groupby('_c0')['_c4'].apply(list).apply( lambda x: sort(x) ).apply( lambda x: ','.join(x) )
+    # print ( type(group_c0_tbl1) )
+
+    group_c0_tbl1 = pd.DataFrame( {'_c0':group_c0_tbl1.index, '_c4':group_c0_tbl1.values } )
+    # print ( type(group_c0_tbl1) )
+    # print ( group_c0_tbl1.columns )
+
+    return group_c0_tbl1
 
 
 def pregunta_12():
@@ -200,7 +237,20 @@ def pregunta_12():
     38   38                    eee:0,fff:9,iii:2
     39   39                    ggg:3,hhh:8,jjj:5
     """
-    return
+
+    tbl2['_c5ab'] = tbl2['_c5a']+":"+tbl2['_c5b'].astype(str)
+    # print ( tbl2 )
+    
+    gc0_tbl2 = tbl2.groupby('_c0')['_c5ab'].apply(list)
+    # print ( gc0_tbl2 )
+
+    gc0_tbl2 = pd.DataFrame({'_c0':gc0_tbl2.index, '_c5':gc0_tbl2.values })
+    # print ( gc0_tbl2 )
+
+    gc0_tbl2['_c5'] = gc0_tbl2['_c5'].apply( lambda x: sort(x)  ).apply( lambda x: ','.join(x) )
+    # print ( gc0_tbl2 )
+ 
+    return gc0_tbl2
 
 
 def pregunta_13():
@@ -217,4 +267,39 @@ def pregunta_13():
     E    275
     Name: _c5b, dtype: int64
     """
-    return
+
+    mergeTable = pd.merge(tbl0,tbl2, sort=True) 
+    # print ( mergeTable.head(n=20) )
+
+    g_mergeTable = mergeTable.groupby('_c1')['_c5b'].sum()
+    # print ( g_mergeTable )
+
+    return g_mergeTable
+"""
+print('* * * * * * * * * * ** * * * * Result pregunta_01')
+print(pregunta_01())
+print('* * * * * * * * * * ** * * * * Result pregunta_02')
+print(pregunta_02())
+print('* * * * * * * * * * ** * * * * Result pregunta_03')
+print(pregunta_03())
+print('* * * * * * * * * * ** * * * * Result pregunta_04')
+print(pregunta_04())
+print('* * * * * * * * * * ** * * * * Result pregunta_05')
+print(pregunta_05())
+print('* * * * * * * * * * ** * * * * Result pregunta_06')
+print(pregunta_06())
+print('* * * * * * * * * * ** * * * * Result pregunta_07')
+print(pregunta_07())
+print('* * * * * * * * * * ** * * * * Result pregunta_08')
+print(pregunta_08())
+print('* * * * * * * * * * ** * * * * Result pregunta_09')
+print(pregunta_09())
+print('* * * * * * * * * * ** * * * * Result pregunta_10')
+print(pregunta_10())
+print('* * * * * * * * * * ** * * * * Result pregunta_11')
+print(pregunta_11())
+print('* * * * * * * * * * ** * * * * Result pregunta_12')
+print(pregunta_12())
+print('* * * * * * * * * * ** * * * * Result pregunta_13')
+print(pregunta_13())
+"""
